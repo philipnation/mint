@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mint NFT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js" integrity="sha512-V3xRGsQMQ8CG4l2gVN44TCDmNY5cdlxbSvejrgmWxcLKHft0Q3XQDbeuJ9aot14mpNuRWGtI//WKraedDGNZ+g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white shadow-lg rounded-lg p-8 w-96 text-center">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Mint Your NFT</h1>
+        <p class="text-gray-600 mb-6">Mint your exclusive NFT by paying <span class="font-semibold">0.2 ETH</span>.</p>
+        <button 
+            id="connectWallet" 
+            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out mb-4 w-full">
+            Connect Wallet
+        </button>
+        <button 
+            id="mintNFT" 
+            class="bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md w-full cursor-not-allowed" 
+            disabled>
+            Mint NFT (0.2 ETH)
+        </button>
+    </div>
+
+    <script>
+        // Initialize variables
+        let provider;
+        let signer;
+        let contract;
+
+        // Your contract details
+        const contractAddress = "0xd2a5bC10698FD955D1Fe6cb468a17809A08fd005"; // Replace with your deployed contract address
+        const contractABI = [
+            {
+                "inputs": [],
+                "name": "mintNFT",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+            }
+        ];
+
+        //console.log(window.ethereum)
+
+        const checkEthereumAvailability = () => {
+            if (typeof window.ethereum === 'undefined') {
+                alert("Please install an Ethereum wallet, like MetaMask or Trust Wallet.");
+                return false;
+            }
+            return true;
+        };
+
+        // Handle Wallet Connection
+        document.getElementById("connectWallet").onclick = async () => {
+            if (!checkEthereumAvailability()) return;
+            try {
+                provider = new ethers.BrowserProvider(window.ethereum);
+                //var provider = new ethers.Web3Provider(web3.currentProvider);
+                //console.log(provider)
+                signer = await provider.getSigner();
+
+                const userAddress = await signer.getAddress();
+                console.log("Connected Address:", userAddress);
+
+                // Initialize the contract
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+                const mintNFTButton = document.getElementById("mintNFT");
+                mintNFTButton.disabled = false;
+                mintNFTButton.classList.remove("bg-gray-400", "text-gray-700", "cursor-not-allowed");
+                mintNFTButton.classList.add("bg-green-600", "hover:bg-green-700", "text-white");
+                alert("Wallet connected!");
+            } catch (error) {
+                console.error("Wallet connection failed:", error);
+            }
+        };
+
+        // Handle NFT Minting
+        document.getElementById("mintNFT").onclick = async () => {
+            try {
+                const mintFee = ethers.parseEther("0.2"); // Set your minting fee
+                // Get the current balance of an account (by address or ENS name)
+                
+                //alert(balance)
+
+
+                // Call the mintNFT function from the smart contract
+                const tx = await contract.mintNFT({ value: mintFee });
+
+                console.log("Transaction Hash:", tx.hash);
+                alert(`Transaction sent: ${tx.hash}`);
+
+                // Wait for transaction confirmation
+                const receipt = await tx.wait();
+                console.log("Transaction Confirmed:", receipt);
+            } catch (error) {
+                console.error("Minting failed:", error);
+            }
+        };
+    </script>
+</body>
+</html>
